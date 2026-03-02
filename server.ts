@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import { createClient } from "@supabase/supabase-js";
@@ -12,10 +13,17 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const supabaseUrl = process.env.SUPABASE_URL || "https://onxixzgugdryxhklafka.supabase.co";
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ueGl4emd1Z2RyeXhoa2xhZmthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyODU4NjQsImV4cCI6MjA4Nzg2MTg2NH0.7Z_VvAqgst0HpGkfLrW-FXiqSrBNBbRQIhUQxjHOOX0";
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn("MISSING SUPABASE CREDENTIALS: Using fallback values. Ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in Vercel environment variables.");
+}
+
+const supabase = createClient(
+  supabaseUrl || "https://onxixzgugdryxhklafka.supabase.co", 
+  supabaseAnonKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ueGl4emd1Z2RyeXhoa2xhZmthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyODU4NjQsImV4cCI6MjA4Nzg2MTg2NH0.7Z_VvAqgst0HpGkfLrW-FXiqSrBNBbRQIhUQxjHOOX0"
+);
 const upload = multer({ dest: "/tmp/uploads/" });
 
 // Ensure uploads directory exists
@@ -35,6 +43,16 @@ async function startServer() {
 
   app.use(express.json());
   app.use(cookieParser());
+
+  // Health Check
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "ok", 
+      env: process.env.NODE_ENV,
+      supabaseConfigured: !!process.env.SUPABASE_URL,
+      vercel: !!process.env.VERCEL
+    });
+  });
 
   // Google Auth Routes
   app.get("/api/auth/google/url", (req, res) => {
