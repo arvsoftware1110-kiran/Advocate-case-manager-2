@@ -1,0 +1,5 @@
+{
+  "name": "test Remix: Advocate Case Manager V6",
+  "description": "A comprehensive case management system for advocates to track case numbers, client details, court stages, and file locations.",
+  "requestFramePermissions": []
+}
